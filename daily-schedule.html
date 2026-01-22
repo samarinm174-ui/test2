@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Расписание дня</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f7fb;
+        --card: #ffffff;
+        --accent: #2563eb;
+        --text: #0f172a;
+        --muted: #64748b;
+        --border: #e2e8f0;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Roboto, Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      header {
+        padding: 32px 16px 12px;
+        text-align: center;
+      }
+
+      header h1 {
+        margin: 0 0 8px;
+        font-size: 28px;
+      }
+
+      header p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      main {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 24px 16px 48px;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+      }
+
+      .form-grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        align-items: end;
+      }
+
+      label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--muted);
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+
+      input,
+      select,
+      textarea,
+      button {
+        font: inherit;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        padding: 10px 12px;
+        background: #fff;
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 80px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      button {
+        border: none;
+        border-radius: 999px;
+        padding: 10px 18px;
+        cursor: pointer;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 600;
+      }
+
+      button.secondary {
+        background: #e2e8f0;
+        color: var(--text);
+      }
+
+      .schedule {
+        margin-top: 24px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+      }
+
+      th,
+      td {
+        padding: 12px;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+      }
+
+      .tag {
+        display: inline-flex;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: #e0e7ff;
+        color: #1d4ed8;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .remove-btn {
+        background: transparent;
+        color: #dc2626;
+        font-weight: 600;
+        padding: 0;
+      }
+
+      .empty {
+        text-align: center;
+        color: var(--muted);
+        padding: 24px 0;
+      }
+
+      footer {
+        text-align: center;
+        color: var(--muted);
+        padding-top: 24px;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Расписание дня</h1>
+      <p>Запланируйте дела, встречи и отдых на сегодня.</p>
+    </header>
+
+    <main>
+      <section class="card">
+        <form id="schedule-form">
+          <div class="form-grid">
+            <div>
+              <label for="day">Дата</label>
+              <input id="day" name="day" type="date" required />
+            </div>
+            <div>
+              <label for="time">Время</label>
+              <input id="time" name="time" type="time" required />
+            </div>
+            <div>
+              <label for="activity">Действие</label>
+              <input
+                id="activity"
+                name="activity"
+                type="text"
+                placeholder="Например: созвон с командой"
+                required
+              />
+            </div>
+            <div>
+              <label for="category">Категория</label>
+              <select id="category" name="category">
+                <option value="Работа">Работа</option>
+                <option value="Личное">Личное</option>
+                <option value="Здоровье">Здоровье</option>
+                <option value="Учеба">Учеба</option>
+                <option value="Отдых">Отдых</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top: 16px;">
+            <label for="notes">Заметки</label>
+            <textarea
+              id="notes"
+              name="notes"
+              placeholder="Что важно помнить, подготовить, принести..."
+            ></textarea>
+          </div>
+          <div class="actions">
+            <button type="submit">Добавить в расписание</button>
+            <button type="button" class="secondary" id="clear-btn">
+              Очистить форму
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section class="schedule card" aria-live="polite">
+        <h2>Список дел</h2>
+        <div id="empty-state" class="empty">
+          Добавьте первое дело, чтобы увидеть расписание.
+        </div>
+        <table id="schedule-table" hidden>
+          <thead>
+            <tr>
+              <th>Время</th>
+              <th>Задача</th>
+              <th>Категория</th>
+              <th>Заметки</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="schedule-body"></tbody>
+        </table>
+      </section>
+
+      <footer>
+        Можно сохранить файл локально или распечатать расписание.
+      </footer>
+    </main>
+
+    <script>
+      const form = document.getElementById("schedule-form");
+      const body = document.getElementById("schedule-body");
+      const emptyState = document.getElementById("empty-state");
+      const table = document.getElementById("schedule-table");
+      const clearButton = document.getElementById("clear-btn");
+      const dayInput = document.getElementById("day");
+
+      const today = new Date();
+      const isoToday = today.toISOString().split("T")[0];
+      dayInput.value = isoToday;
+
+      const entries = [];
+
+      const render = () => {
+        body.innerHTML = "";
+
+        if (entries.length === 0) {
+          emptyState.hidden = false;
+          table.hidden = true;
+          return;
+        }
+
+        emptyState.hidden = true;
+        table.hidden = false;
+
+        entries
+          .sort((a, b) => a.time.localeCompare(b.time))
+          .forEach((entry, index) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${entry.time}</td>
+              <td>${entry.activity}</td>
+              <td><span class="tag">${entry.category}</span></td>
+              <td>${entry.notes || "—"}</td>
+              <td>
+                <button type="button" class="remove-btn" data-index="${index}">
+                  Удалить
+                </button>
+              </td>
+            `;
+            body.appendChild(row);
+          });
+      };
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        const formData = new FormData(form);
+        const entry = {
+          day: formData.get("day"),
+          time: formData.get("time"),
+          activity: formData.get("activity"),
+          category: formData.get("category"),
+          notes: formData.get("notes").trim(),
+        };
+
+        entries.push(entry);
+        render();
+        form.reset();
+        dayInput.value = entry.day;
+      });
+
+      clearButton.addEventListener("click", () => {
+        form.reset();
+        dayInput.value = isoToday;
+      });
+
+      body.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLButtonElement)) {
+          return;
+        }
+        const index = Number(target.dataset.index);
+        if (Number.isNaN(index)) {
+          return;
+        }
+        entries.splice(index, 1);
+        render();
+      });
+    </script>
+  </body>
+</html>
