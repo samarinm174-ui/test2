@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Контроль бюджета</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: #f5f6fb;
+        color: #1d1f2a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 32px 16px 48px;
+      }
+
+      .app {
+        max-width: 760px;
+        margin: 0 auto;
+        display: grid;
+        gap: 20px;
+      }
+
+      header {
+        display: grid;
+        gap: 8px;
+      }
+
+      header h1 {
+        margin: 0;
+        font-size: 28px;
+      }
+
+      header p {
+        margin: 0;
+        color: #5f6270;
+      }
+
+      .card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 10px 20px rgba(18, 24, 40, 0.06);
+        display: grid;
+        gap: 16px;
+      }
+
+      .row {
+        display: grid;
+        gap: 8px;
+      }
+
+      label {
+        font-weight: 600;
+      }
+
+      input[type="text"],
+      input[type="number"] {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 10px;
+        border: 1px solid #d6d8e1;
+        font-size: 16px;
+      }
+
+      input:focus {
+        outline: 2px solid rgba(57, 96, 255, 0.35);
+        border-color: #3960ff;
+      }
+
+      .grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      }
+
+      .actions {
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      button {
+        background: #3960ff;
+        color: #ffffff;
+        border: none;
+        padding: 12px 18px;
+        border-radius: 10px;
+        font-size: 15px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: #2f4fe0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 10px 8px;
+        text-align: left;
+        border-bottom: 1px solid #edf0f6;
+        font-size: 14px;
+      }
+
+      th {
+        color: #5f6270;
+        font-weight: 600;
+      }
+
+      td.amount {
+        font-variant-numeric: tabular-nums;
+      }
+
+      .remove {
+        background: #f4f5f9;
+        color: #1d1f2a;
+        padding: 6px 10px;
+        border-radius: 8px;
+        border: 1px solid #e0e3eb;
+      }
+
+      .remove:hover {
+        background: #e9ecf3;
+      }
+
+      .empty {
+        margin: 12px 0 0;
+        color: #5f6270;
+      }
+
+      .summary {
+        grid-template-columns: 1fr auto;
+        align-items: center;
+      }
+
+      .balance {
+        font-size: 32px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .balance.negative {
+        color: #c0392b;
+      }
+
+      .hint {
+        color: #5f6270;
+        margin: 0;
+      }
+
+      footer {
+        text-align: center;
+        color: #5f6270;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <h1>Контроль бюджета</h1>
+        <p>Укажите исходный баланс и добавляйте расходы ниже.</p>
+      </header>
+
+      <section class="card">
+        <h2>Исходный бюджет</h2>
+        <div class="row">
+          <label for="initialBudget">Сумма</label>
+          <input
+            id="initialBudget"
+            type="number"
+            inputmode="decimal"
+            min="0"
+            step="0.01"
+            placeholder="0.00"
+          />
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Расходы</h2>
+        <form id="expenseForm">
+          <div class="grid">
+            <div class="row">
+              <label for="expenseName">Наименование</label>
+              <input
+                id="expenseName"
+                type="text"
+                maxlength="60"
+                placeholder="Например, продукты"
+                autocomplete="off"
+              />
+            </div>
+            <div class="row">
+              <label for="expenseAmount">Сумма</label>
+              <input
+                id="expenseAmount"
+                type="number"
+                inputmode="decimal"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+          <div class="actions">
+            <button type="submit">Добавить расход</button>
+          </div>
+        </form>
+
+        <div>
+          <table aria-label="Список расходов">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Наименование</th>
+                <th>Сумма</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="expenseList"></tbody>
+          </table>
+          <p class="empty" id="emptyState">Пока нет расходов.</p>
+        </div>
+      </section>
+
+      <section class="card summary">
+        <div>
+          <h2>Остаток бюджета</h2>
+          <p class="hint">Исходный баланс минус все расходы.</p>
+        </div>
+        <div class="balance" id="remainingValue">0.00</div>
+      </section>
+
+      <footer>Данные сохраняются локально в вашем браузере.</footer>
+    </div>
+
+    <script>
+      const STORAGE_KEY = "budget-app-data-v1";
+
+      const initialBudgetInput = document.getElementById("initialBudget");
+      const expenseForm = document.getElementById("expenseForm");
+      const expenseNameInput = document.getElementById("expenseName");
+      const expenseAmountInput = document.getElementById("expenseAmount");
+      const expenseList = document.getElementById("expenseList");
+      const remainingValue = document.getElementById("remainingValue");
+      const emptyState = document.getElementById("emptyState");
+
+      let state = {
+        initialBudget: null,
+        expenses: [],
+      };
+
+      const parseAmount = (value) => {
+        if (typeof value !== "string") {
+          return null;
+        }
+        const normalized = value.replace(",", ".").trim();
+        if (!normalized) {
+          return null;
+        }
+        const number = Number.parseFloat(normalized);
+        return Number.isFinite(number) ? number : null;
+      };
+
+      const formatAmount = (value) => {
+        if (!Number.isFinite(value)) {
+          return "0.00";
+        }
+        return value.toFixed(2);
+      };
+
+      const loadState = () => {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          return;
+        }
+        try {
+          const data = JSON.parse(raw);
+          const initial =
+            typeof data.initialBudget === "number" &&
+            Number.isFinite(data.initialBudget)
+              ? data.initialBudget
+              : null;
+          const expenses = Array.isArray(data.expenses) ? data.expenses : [];
+          state = {
+            initialBudget: initial,
+            expenses: expenses
+              .map((item) => {
+                if (!item || typeof item !== "object") {
+                  return null;
+                }
+                const amount = Number.parseFloat(item.amount);
+                const name = typeof item.name === "string" ? item.name.trim() : "";
+                if (!Number.isFinite(amount) || amount <= 0 || !name) {
+                  return null;
+                }
+                const id = typeof item.id === "string" ? item.id : "";
+                return { id, name, amount };
+              })
+              .filter(Boolean),
+          };
+        } catch (error) {
+          state = { initialBudget: null, expenses: [] };
+        }
+      };
+
+      const saveState = () => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      };
+
+      const calculateTotals = () => {
+        const totalExpenses = state.expenses.reduce(
+          (sum, expense) => sum + expense.amount,
+          0
+        );
+        const initial = state.initialBudget ?? 0;
+        return {
+          totalExpenses,
+          remaining: initial - totalExpenses,
+        };
+      };
+
+      const renderSummary = () => {
+        const { remaining } = calculateTotals();
+        remainingValue.textContent = formatAmount(remaining);
+        if (remaining < 0) {
+          remainingValue.classList.add("negative");
+        } else {
+          remainingValue.classList.remove("negative");
+        }
+      };
+
+      const createExpenseRow = (expense, index) => {
+        const row = document.createElement("tr");
+
+        const indexCell = document.createElement("td");
+        indexCell.textContent = String(index + 1);
+
+        const nameCell = document.createElement("td");
+        nameCell.textContent = expense.name;
+
+        const amountCell = document.createElement("td");
+        amountCell.textContent = formatAmount(expense.amount);
+        amountCell.classList.add("amount");
+
+        const actionCell = document.createElement("td");
+        const removeButton = document.createElement("button");
+        removeButton.type = "button";
+        removeButton.className = "remove";
+        removeButton.dataset.id = expense.id;
+        removeButton.textContent = "Удалить";
+        actionCell.appendChild(removeButton);
+
+        row.append(indexCell, nameCell, amountCell, actionCell);
+        return row;
+      };
+
+      const renderExpenses = () => {
+        expenseList.innerHTML = "";
+        if (state.expenses.length === 0) {
+          emptyState.style.display = "block";
+          return;
+        }
+        emptyState.style.display = "none";
+        state.expenses.forEach((expense, index) => {
+          expenseList.appendChild(createExpenseRow(expense, index));
+        });
+      };
+
+      const generateId = () =>
+        `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+      const addExpense = (name, amount) => {
+        state.expenses.push({
+          id: generateId(),
+          name,
+          amount,
+        });
+        saveState();
+        renderExpenses();
+        renderSummary();
+      };
+
+      initialBudgetInput.addEventListener("input", (event) => {
+        const amount = parseAmount(event.target.value);
+        state.initialBudget = amount !== null ? amount : null;
+        saveState();
+        renderSummary();
+      });
+
+      expenseForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const name = expenseNameInput.value.trim();
+        const amount = parseAmount(expenseAmountInput.value);
+        if (!name || amount === null || amount <= 0) {
+          return;
+        }
+        addExpense(name, amount);
+        expenseNameInput.value = "";
+        expenseAmountInput.value = "";
+        expenseNameInput.focus();
+      });
+
+      expenseList.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-id]");
+        if (!button) {
+          return;
+        }
+        const { id } = button.dataset;
+        state.expenses = state.expenses.filter((expense) => expense.id !== id);
+        saveState();
+        renderExpenses();
+        renderSummary();
+      });
+
+      loadState();
+      if (state.initialBudget !== null) {
+        initialBudgetInput.value = state.initialBudget.toString();
+      }
+      renderExpenses();
+      renderSummary();
+    </script>
+  </body>
+</html>
