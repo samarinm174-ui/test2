@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Расписание дня</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #ffeaf4;
+        --card: #fff6fb;
+        --accent: #d63384;
+        --text: #4a1d3a;
+        --muted: #a14979;
+        --border: #f5b6d0;
+        --input: #ffffff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Roboto, Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      main {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 32px 16px 48px;
+      }
+
+      h1 {
+        margin: 0 0 16px;
+        text-align: center;
+        font-size: 26px;
+        color: var(--accent);
+      }
+
+      .table-wrap {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: 0 8px 18px rgba(214, 51, 132, 0.18);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 10px;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+      }
+
+      th {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+      }
+
+      tr:last-child td {
+        border-bottom: none;
+      }
+
+      input {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 8px 10px;
+        background: var(--input);
+        color: var(--text);
+      }
+
+      input:focus {
+        outline: 2px solid #f3b5d0;
+        border-color: #f3b5d0;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Расписание дня</h1>
+      <section class="table-wrap">
+        <table aria-label="Расписание дня">
+          <thead>
+            <tr>
+              <th>Название дела</th>
+              <th>Комментарий 1</th>
+              <th>Комментарий 2</th>
+            </tr>
+          </thead>
+          <tbody id="schedule-body"></tbody>
+        </table>
+      </section>
+    </main>
+
+    <script>
+      const STORAGE_KEY = "dailyScheduleRows";
+      const DEFAULT_ROWS = 12;
+      const body = document.getElementById("schedule-body");
+
+      const loadRows = () => {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) {
+            return null;
+          }
+          const parsed = JSON.parse(raw);
+          if (!Array.isArray(parsed)) {
+            return null;
+          }
+          return parsed;
+        } catch (error) {
+          return null;
+        }
+      };
+
+      const normalizeRows = (savedRows) =>
+        Array.from({ length: DEFAULT_ROWS }, (_, index) => {
+          const saved =
+            savedRows && typeof savedRows[index] === "object"
+              ? savedRows[index]
+              : {};
+          return {
+            task: typeof saved.task === "string" ? saved.task : "",
+            comment1:
+              typeof saved.comment1 === "string" ? saved.comment1 : "",
+            comment2:
+              typeof saved.comment2 === "string" ? saved.comment2 : "",
+          };
+        });
+
+      let rows = normalizeRows(loadRows());
+
+      const createInput = (value, index, field, label) => {
+        const input = document.createElement("input");
+        input.type = "text";
+        input.value = value;
+        input.dataset.index = String(index);
+        input.dataset.field = field;
+        input.setAttribute("aria-label", label);
+        return input;
+      };
+
+      const createRow = (row, index) => {
+        const tr = document.createElement("tr");
+
+        const taskCell = document.createElement("td");
+        taskCell.appendChild(
+          createInput(row.task, index, "task", "Название дела")
+        );
+
+        const commentCell1 = document.createElement("td");
+        commentCell1.appendChild(
+          createInput(row.comment1, index, "comment1", "Расписание 1")
+        );
+
+        const commentCell2 = document.createElement("td");
+        commentCell2.appendChild(
+          createInput(row.comment2, index, "comment2", "Расписание 2")
+        );
+
+        tr.append(taskCell, commentCell1, commentCell2);
+        return tr;
+      };
+
+      const render = () => {
+        body.innerHTML = "";
+        rows.forEach((row, index) => {
+          body.appendChild(createRow(row, index));
+        });
+      };
+
+      const saveRows = () => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
+      };
+
+      body.addEventListener("input", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement)) {
+          return;
+        }
+        const index = Number(target.dataset.index);
+        const field = target.dataset.field;
+        if (!Number.isInteger(index) || !field || !rows[index]) {
+          return;
+        }
+        rows[index][field] = target.value;
+        saveRows();
+      });
+
+      render();
+    </script>
+  </body>
+</html>
